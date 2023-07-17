@@ -168,7 +168,7 @@ def check_callback_data(callback):
         bot.edit_message_text(chat_id=callback.message.chat.id, message_id=callback.message.id, text='Выберите какую остановку удалить:' , reply_markup=deleting_keyboard)
 
 def get_stop_info(url, chat_id) -> str:
-    uniquename = url[-10:]
+    uniquename = url.split("/")[-1]
 
     path = f'src\\files\\{chat_id}_{uniquename}.html'
     with open(path, encoding='utf-8', mode='r') as file:
@@ -220,7 +220,7 @@ def get_source_html(url, chat_id):
         driver.get(url=url)
         time.sleep(1)
 
-        uniquename = url[-10:]
+        uniquename = url.split("/")[-1]
         while True:
             path = f'src\\files\\{chat_id}_{uniquename}.html'
             with open(path, "w", encoding='utf-8') as file:
