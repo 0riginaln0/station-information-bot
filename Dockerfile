@@ -15,4 +15,4 @@ RUN apt-get update && apt-get install -y wget unzip && \
     rm google-chrome-stable_current_amd64.deb && \
     apt-get clean
 
-CMD [ "python", "transport_bot.py" ]
+CMD [ "python", "-u", "transport_bot.py" ]
