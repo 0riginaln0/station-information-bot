@@ -7,5 +7,6 @@
 
 # build & run:
 1. cd station-information-bot
-2. docker build -t station-info-bot:v1 .
-3. docker run station-info-bot:v1
+2. mkdir secrets. And create in this folder secret_tocken.txt with your tg bot token
+3. docker build -t station-info-bot:v1 .
+4. docker run station-info-bot:v1
