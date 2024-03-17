@@ -1,13 +1,14 @@
-import telebot
-from telebot import types
-from telebot.util import async_dec
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 import time
 import re
 import logging
 import os
+
+import telebot
+from telebot import types
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 logger = telebot.logger
@@ -19,9 +20,14 @@ class ExceptionHandler(telebot.ExceptionHandler):
         logger.error(exception)
 
 
-# path = "secrets\\secret_tocken.txt"
-path = "secrets/secret_tocken.txt"
-with open(path, "r", encoding='utf-8') as file:
+secrets_path = ''
+match os.name:
+    case 'nt':
+        sercrets_path = "secrets\\secret_tocken.txt"
+    case 'posix':
+        sercrets_path = "secrets/secret_tocken.txt"
+
+with open(sercrets_path, "r", encoding='utf-8') as file:
     src = file.read()
 
 bot = telebot.TeleBot(f'{src}', exception_handler=ExceptionHandler(),
@@ -32,10 +38,18 @@ stop_regexp = r'^https:\/\/yandex\.ru\/maps\/-\/[A-Za-z0-9]+'
 # Приветственное сообщение
 
 
+files_path = ''
+match os.name:
+    case 'nt':
+        files_path = 'src\\files\\'
+    case 'posix':
+        files_path = 'src/files/'
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
-    # path = f'src\\files\\{message.chat.id}_stops.html'
-    path = f'src/files/{message.chat.id}_stops.html'
+    path = f'{files_path}{message.chat.id}_stops.html'
+    # path = f'src/files/{message.chat.id}_stops.html'
     open(path, encoding='utf-8', mode='a')
 
     keysmarkup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -60,8 +74,7 @@ def send_tutorial(message):
 
 @bot.message_handler(commands=['menu'])
 def start(message):
-    path = f'src/files/{message.chat.id}_stops.html'
-    # path = f'src\\files\\{message.chat.id}_stops.html'
+    path = f'{files_path}{message.chat.id}_stops.html'
     open(path, encoding='utf-8', mode='a')
 
     keysmarkup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -84,8 +97,7 @@ def review_link(message):
     link_to_save = message.text
     print(link_to_save)
     if re.match(stop_regexp, link_to_save) and not is_in_list(link_to_save, message.chat.id):
-        path = f'src/files/{message.chat.id}_stops.html'
-        # path = f'src\\files\\{message.chat.id}_stops.html'
+        path = f'{files_path}{message.chat.id}_stops.html'
         with open(path, encoding='utf-8', mode='a') as file:
             file.write(link_to_save)
         sent = bot.reply_to(message, 'Назовите эту остановку')
@@ -98,8 +110,7 @@ def review_link(message):
 
 
 def is_in_list(link_to_save, chat_id):
-    path = f'src/files/{chat_id}_stops.html'
-    # path = f'src\\files\\{chat_id}_stops.html'
+    path = f'{files_path}{chat_id}_stops.html'
     with open(path, "r", encoding='utf-8') as file:
         src = file.read()
     result = src.find(link_to_save)
@@ -112,8 +123,7 @@ def is_in_list(link_to_save, chat_id):
 def review_name(message):
     name_to_save = message.text
     print(name_to_save)
-    path = f'src/files/{message.chat.id}_stops.html'
-    # path = f'src\\files\\{message.chat.id}_stops.html'
+    path = f'{files_path}{message.chat.id}_stops.html'
     with open(path, encoding='utf-8', mode='a') as file:
         file.write(f', {name_to_save}\n')
     bot.reply_to(message, 'Остановка добавлена')
@@ -124,8 +134,7 @@ def review_name(message):
 @bot.message_handler(regexp=r'Посмотреть остановки')
 def show_stops(message):
     keyboard = types.InlineKeyboardMarkup()
-    path = f'src/files/{message.chat.id}_stops.html'
-    # path = f'src\\files\\{message.chat.id}_stops.html'
+    path = f'{files_path}{message.chat.id}_stops.html'
     with open(path, encoding='utf-8', mode='a') as f:
         pass
     with open(path, encoding='utf-8', mode='r') as f:
@@ -143,8 +152,7 @@ def show_stops(message):
 @bot.message_handler(regexp=r'Удалить остановку')
 def delete_stop_link(message):
     deleting_keyboard = types.InlineKeyboardMarkup()
-    path = f'src/files/{message.chat.id}_stops.html'
-    # path = f'src\\files\\{message.chat.id}_stops.html'
+    path = f'{files_path}{message.chat.id}_stops.html'
     with open(path, encoding='utf-8', mode='r') as f:
         for line in f:
             info = line.partition(',')
@@ -157,8 +165,7 @@ def delete_stop_link(message):
 
 
 def delete_stop(callback, chat_id):
-    path = f'src/files/{chat_id}_stops.html'
-    # path = f'src\\files\\{chat_id}_stops.html'
+    path = f'{files_path}{chat_id}_stops.html'
 
     with open(path, encoding='utf-8', mode='r') as file:
         link_to_delete = callback.partition(',')[0]
@@ -191,8 +198,7 @@ def check_callback_data(callback):
         delete_stop(callback.data, callback.message.chat.id)
         bot.send_message(callback.message.chat.id, "Остановка удалена")
         deleting_keyboard = types.InlineKeyboardMarkup()
-        path = f'src/files/{callback.message.chat.id}_stops.html'
-        # path = f'src\\files\\{callback.message.chat.id}_stops.html'
+        path = f'{files_path}{callback.message.chat.id}_stops.html'
         with open(path, encoding='utf-8', mode='r') as f:
             for line in f:
                 info = line.partition(',')
@@ -207,11 +213,11 @@ def check_callback_data(callback):
 def get_stop_info(url, chat_id) -> str:
     uniquename = url.split("/")[-1]
 
-    path = f'src/files/{chat_id}_{uniquename}.html'
-    # path = f'src\\files\\{chat_id}_{uniquename}.html'
+    path = f'{files_path}{chat_id}_{uniquename}.html'
     with open(path, encoding='utf-8', mode='r') as file:
-        # doc = BeautifulSoup(file, "lxml") # для использования lxml нужно докачивать lxml отдельно (pip install lxml)
-        doc = BeautifulSoup(file, "html.parser")
+        # для использования lxml нужно докачивать lxml отдельно (pip install lxml)
+        doc = BeautifulSoup(file, "lxml")
+        # doc = BeautifulSoup(file, "html.parser")
 
     transportTypes = doc.find_all(class_="masstransit-transport-list-view__type-name")
 
@@ -254,10 +260,15 @@ def findTransportTime(TransportType, TransportPostfix, outputlist, doc):
     outputlist.append("\n")
 
 
+service = Service(ChromeDriverManager().install())
+
+
 def get_source_html(url, chat_id):
     # driver_service = Service("chromedriver-win64\chromedriver.exe")
-    driver_service = Service("chromedriver-linux64\chromedriver")
-    driver = webdriver.Chrome(service=driver_service)
+    # driver_service = Service("chromedriver-linux64\chromedriver")
+    # driver = webdriver.Chrome(service=driver_service)
+
+    driver = webdriver.Chrome(service=service)
 
     driver.maximize_window()
     try:
@@ -266,8 +277,7 @@ def get_source_html(url, chat_id):
 
         uniquename = url.split("/")[-1]
         while True:
-            path = f'src/files/{chat_id}_{uniquename}.html'
-            # path = f'src\\files\\{chat_id}_{uniquename}.html'
+            path = f'{files_path}{chat_id}_{uniquename}.html'
             with open(path, "w", encoding='utf-8') as file:
                 file.write(driver.page_source)
             time.sleep(1)
