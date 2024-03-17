@@ -274,6 +274,8 @@ def get_source_html(url, chat_id):
     # driver = webdriver.Chrome(service=driver_service)
 
     # # Setting driver from library
+
+    # # use driver with options for docker container
     # driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
     driver = webdriver.Chrome(service=chrome_service)
 
