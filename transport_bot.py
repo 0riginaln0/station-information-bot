@@ -7,6 +7,7 @@ import telebot
 from telebot import types
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -183,7 +184,7 @@ def delete_stop(callback, chat_id):
     with open(path, encoding='utf-8', mode='w') as file:
         file.writelines(lines)
 
-# Обработчик колбэко
+# Обработчик колбэков
 
 
 @bot.callback_query_handler(func=lambda callback: callback.data)
@@ -246,7 +247,6 @@ def get_stop_info(url, chat_id) -> str:
                 outputlist.append(f'Мы ещё не поддерживаем {i.text}')
 
     output = ''.join(outputlist)
-
     os.remove(path)
     return output
 
@@ -260,17 +260,24 @@ def findTransportTime(TransportType, TransportPostfix, outputlist, doc):
     outputlist.append("\n")
 
 
-service = Service(ChromeDriverManager().install())
+chrome_service = Service(ChromeDriverManager().install())
+chrome_options = Options()
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--disable-dev-shm-usage')
 
 
 def get_source_html(url, chat_id):
+    # # old way to set driver from file
     # driver_service = Service("chromedriver-win64\chromedriver.exe")
     # driver_service = Service("chromedriver-linux64\chromedriver")
     # driver = webdriver.Chrome(service=driver_service)
 
-    driver = webdriver.Chrome(service=service)
+    # # Setting driver from library
+    # driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    driver = webdriver.Chrome(service=chrome_service)
 
-    driver.maximize_window()
+    # driver.maximize_window()
     try:
         driver.get(url=url)
         time.sleep(1)
